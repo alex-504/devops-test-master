@@ -2,6 +2,7 @@ import logging
 import os
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from flask import Flask, jsonify, request
 from beer_catalog.db import engine, session_local
 from beer_catalog.beer import Base, Beer
@@ -30,7 +31,7 @@ def health_check():
     try:
         # Test database connection
         session = session_local()
-        session.execute("SELECT 1")
+        session.execute(text("SELECT 1"))
         session.close()
         return jsonify({"status": "healthy", "database": "connected"}), 200
     except Exception as e:
