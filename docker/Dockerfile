@@ -2,7 +2,8 @@ FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    POETRY_VIRTUALENVS_CREATE=false
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_HOME="/opt/poetry" 
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
@@ -11,8 +12,9 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y curl build-essential \
   && curl -sSL https://install.python-poetry.org | python3 - \
-  && ln -s /root/.local/bin/poetry /usr/local/bin/poetry \
+  && ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV PATH="${POETRY_HOME}/bin:${PATH}"
 
 COPY app/pyproject.toml app/poetry.lock* ./
 
