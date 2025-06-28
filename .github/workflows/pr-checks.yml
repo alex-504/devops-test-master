@@ -29,14 +29,12 @@ jobs:
       # Step 4: Install dependencies with Poetry
       - name: Install dependencies
         run: |
-          cd app
           poetry install
 
       # Step 5: Run Black (code style linter)
       - name: Run black (lint)
         run: |
-          cd app
-          poetry run black --check .
+          poetry run black --check app/
 
       # Step 6: (Optional) Run tests if you add them later
       # - name: Run tests
