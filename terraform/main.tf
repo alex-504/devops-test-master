@@ -14,6 +14,71 @@ resource "aws_ecr_repository" "beer_app" {
     Name = "Beer Catalog App Repository"
   }
 }
+# ECS Task Execution Role - Allows ECS tasks to pull images from ECR and write logs
+resource "aws_iam_role" "ecs_task_execution" {
+  name = "${var.project_name}-ecs-task-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.project_name}-ecs-task-execution-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# ECS Cluster - The kitchen for your containers
+resource "aws_ecs_cluster" "main" {
+  name = "${var.project_name}-cluster"
+
+  tags = {
+    Name = "${var.project_name}-cluster"
+  }
+}
+
+# ECS Task Definition - The recipe for running your app container
+resource "aws_ecs_task_definition" "app" {
+  family                   = "${var.project_name}-task"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 256
+  memory                   = 512
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "beer-app"
+      image     = var.app_image
+      portMappings = [
+        {
+          containerPort = 5000
+          protocol      = "tcp"
+        }
+      ]
+      environment = [
+        {
+          name  = "DB_HOST"
+          value = "beer-catalog-db" # Replace with your RDS endpoint or use a variable
+        }
+      ]
+      essential = true
+    }
+  ])
+}
 
 # VPC - Virtual Private Cloud (our private network)
 # Think of it like a private neighborhood for our app
@@ -158,5 +223,26 @@ resource "aws_db_instance" "beer_database" {
   # Tags
   tags = {
     Name = "Beer Catalog Database"
+  }
+}
+
+# ECS Service - The manager that keeps your app running
+resource "aws_ecs_service" "app" {
+  name            = "${var.project_name}-service"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.app.arn
+  launch_type     = "FARGATE"
+  desired_count   = 1
+
+  network_configuration {
+    subnets          = [aws_subnet.public.id] # Run in the public subnet
+    security_groups  = [aws_security_group.app.id] # Attach the app security group
+    assign_public_ip = true # Needed for internet access
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.ecs_task_execution]
+
+  tags = {
+    Name = "${var.project_name}-service"
   }
 }

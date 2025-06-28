@@ -17,4 +17,9 @@ variable "db_password" {
   description = "Password for the database"
   type        = string
   sensitive   = true # This hides the password in logs
+}
+
+variable "app_image" {
+  description = "Docker image to use for the app (ECR URL)"
+  type        = string
 } 
