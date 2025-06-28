@@ -47,7 +47,96 @@ The small app in python has only two endpoints
 - Separation of concerns
 - AWS knowledge
 
+## How to Deploy This Infrastructure to AWS 👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻
 
+This project is ready to be deployed to AWS using Terraform. Follow these steps to connect your resources to your AWS account and provide all required variables.
+
+---
+
+### 1. **Set Up AWS Credentials**
+
+Terraform needs AWS credentials to create resources in your account.  
+You can provide credentials in several ways, but the most common is using the AWS CLI:
+
+```sh
+aws configure
+```
+- Enter your AWS Access Key ID
+- Enter your AWS Secret Access Key
+- Enter your default region (e.g., us-east-1)
+- Enter your default output format (json is fine)
+
+Alternatively, you can set these as environment variables:
+```sh
+export AWS_ACCESS_KEY_ID=your-access-key
+export AWS_SECRET_ACCESS_KEY=your-secret-key
+export AWS_DEFAULT_REGION=us-east-1
+```
+
+---
+
+### 2. **Set Required Terraform Variables**
+
+Some resources require variables that must be provided at runtime, such as your database password and the Docker image for your app.
+
+You can provide these variables in several ways:
+
+**A. As environment variables:**
+```sh
+export TF_VAR_db_password="yourStrongPassword"
+export TF_VAR_app_image="123456789012.dkr.ecr.us-east-1.amazonaws.com/beer-catalog-app:latest"
+```
+
+**B. As command-line arguments:**
+```sh
+terraform apply -var="db_password=yourStrongPassword" -var="app_image=123456789012.dkr.ecr.us-east-1.amazonaws.com/beer-catalog-app:latest"
+```
+
+**C. In a `terraform.tfvars` file:**
+```hcl
+db_password = "yourStrongPassword"
+app_image   = "123456789012.dkr.ecr.us-east-1.amazonaws.com/beer-catalog-app:latest"
+```
+
+---
+
+### 3. **Initialize and Validate Terraform**
+
+```sh
+terraform init
+terraform validate
+```
+
+---
+
+### 4. **Plan and Apply**
+
+**Preview the changes:**
+```sh
+terraform plan
+```
+
+**Apply the changes (provision resources):**
+```sh
+terraform apply
+```
+
+---
+
+### 5. **Notes**
+
+- You must have sufficient AWS permissions to create VPCs, subnets, ECS, RDS, ECR, and IAM roles.
+- The `app_image` variable should point to a Docker image you have pushed to your ECR repository.
+- The `db_password` should be a strong password for your PostgreSQL database.
+- No AWS resources will be created until you run `terraform apply`.
+- You can destroy all resources with:
+  ```sh
+  terraform destroy
+  ```
+
+---
+
+**If you do not have an AWS account, you can still review and validate the code with `terraform validate`.**
 
 ## How to test the app
 
@@ -147,8 +236,6 @@ curl http://127.0.0.1:5000/beers
 
 ```
 
-
-
 ** Summary of DB tests:
 | Step                | SQLite Command/Setting                        | PostgreSQL Command/Setting                        |
 |---------------------|-----------------------------------------------|---------------------------------------------------|
@@ -183,6 +270,29 @@ dropdb beer_catalog
 createdb beer_catalog
 python seed.py
 ```
+
+## 🐳 ECS (Elastic Container Service) Setup
+
+This project uses AWS ECS Fargate to run the Beer Catalog app in a scalable, managed container environment.
+
+### What's Set Up
+- **ECS Cluster**: The environment where your containers run
+- **Task Definition**: The "recipe" for your app container (image, ports, env vars)
+- **Task Execution Role**: Lets ECS pull images from ECR and write logs
+- **ECS Service**: Keeps your app running and accessible in the public subnet
+
+### How to Configure the App Image
+- Set the `app_image` variable to the full ECR image URL you want to deploy (e.g., `123456789012.dkr.ecr.us-east-1.amazonaws.com/beer-catalog-app:latest`).
+- You can do this via environment variable, command-line flag, or `terraform.tfvars` (see AWS deployment instructions above).
+
+### How to Access the App
+- After deployment, the app will be running in the public subnet on port 5000.
+- You can find the public IP by checking the ECS task in the AWS console (or by adding a Terraform output for the task ENI/public IP).
+- If you add a load balancer, update this section to explain how to access the app via the load balancer DNS name.
+
+### Notes
+- The ECS service is set to run 1 copy of your app by default. You can scale this by changing the `desired_count` in the Terraform code.
+- For production, consider adding a load balancer and auto-scaling.
 
 
 
