@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "beer_catalog", from = "app"}]
+packages = [{include = "beer_catalog"}]
 
 
 [tool.poetry.group.dev.dependencies]

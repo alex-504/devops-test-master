@@ -26,15 +26,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
 
-      # Step 4: Install dependencies with Poetry
+      # Step 4: Install dependencies with Poetry (from app/)
       - name: Install dependencies
         run: |
+          cd app
           poetry install
 
       # Step 5: Run Black (code style linter)
       - name: Run black (lint)
         run: |
-          poetry run black --check app/
+          cd app
+          poetry run black --check .
 
       # Step 6: (Optional) Run tests if you add them later
       # - name: Run tests
