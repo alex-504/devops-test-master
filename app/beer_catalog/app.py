@@ -47,7 +47,10 @@ def get_all_beers():
         beers = session.query(Beer).all()
         session.close()
         return jsonify(
-            [{"id": b.id, "name": b.name, "style": b.style, "abv": b.abv} for b in beers]
+            [
+                {"id": b.id, "name": b.name, "style": b.style, "abv": b.abv}
+                for b in beers
+            ]
         )
     except Exception as e:
         logger.error(f"Error getting beers: {e}")
@@ -59,14 +62,14 @@ def create_beer():
     """Create a new beer"""
     try:
         data = request.get_json()
-        
+
         # Input validation
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
+
         if "name" not in data or not data["name"]:
             return jsonify({"error": "Beer name is required"}), 400
-        
+
         # Validate ABV if provided
         abv = data.get("abv")
         if abv is not None:
@@ -76,18 +79,14 @@ def create_beer():
                     return jsonify({"error": "ABV must be between 0 and 100"}), 400
             except (ValueError, TypeError):
                 return jsonify({"error": "ABV must be a valid number"}), 400
-        
+
         session = session_local()
-        beer = Beer(
-            name=data["name"], 
-            style=data.get("style"), 
-            abv=abv
-        )
+        beer = Beer(name=data["name"], style=data.get("style"), abv=abv)
         session.add(beer)
         session.commit()
         session.refresh(beer)
         session.close()
-        
+
         logger.info(f"Created beer: {beer.name}")
         return (
             jsonify(
