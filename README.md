@@ -77,7 +77,6 @@ export AWS_DEFAULT_REGION=us-east-1
 
 ### 2. **Set Required Terraform Variables**
 
-
 Some resources require variables that must be provided at runtime, such as your database password and the Docker image for your app.
 
 You can provide these variables in several ways:
