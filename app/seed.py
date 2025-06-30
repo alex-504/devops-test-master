@@ -29,15 +29,15 @@ def seed_data():
 
         session.add_all(beers)
         session.commit()
-        
+
         result = {
-            "status": "success", 
+            "status": "success",
             "message": "Database seeded with sample beers",
             "beers_added": len(beers),
             "beers": [
                 {"name": beer.name, "style": beer.style, "abv": beer.abv}
                 for beer in beers
-            ]
+            ],
         }
         print(json.dumps(result, indent=2))
         session.close()

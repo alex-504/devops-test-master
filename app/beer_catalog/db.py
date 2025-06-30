@@ -4,8 +4,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 # Get database URL from environment variable (12-factor app principle #3)
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql://postgres:postgres@localhost:5432/beer_catalog"
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/beer_catalog"
 )
 
 # Create PostgreSQL engine
