@@ -5,9 +5,9 @@
 # app_image = "311450700715.dkr.ecr.ap-southeast-2.amazonaws.com/my-ecr-repo:latest"
 
 variable "aws_region" {
-  description = "Which AWS region to use (like us-east-1)"
+  description = "Which AWS region to use (like ap-southeast-2)"
   type        = string
-  default     = "us-east-1"
+  default     = "ap-southeast-2"
 }
 
 variable "project_name" {
