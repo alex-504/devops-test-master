@@ -204,7 +204,7 @@ resource "aws_db_instance" "beer_database" {
   # Basic settings
   identifier     = "${var.project_name}-db"
   engine         = "postgres"
-  engine_version = "15.4"
+  engine_version = "17.4"
   instance_class = "db.t3.micro" # Smallest/cheapest option
 
   # Database settings
