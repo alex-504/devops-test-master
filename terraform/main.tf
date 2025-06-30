@@ -197,6 +197,16 @@ resource "aws_security_group" "db" {
   }
 }
 
+# DB Subnet Group - Tells RDS which subnets to use
+resource "aws_db_subnet_group" "main" {
+  name       = "${var.project_name}-db-subnet-group"
+  subnet_ids = [aws_subnet.private.id, aws_subnet.public.id]
+
+  tags = {
+    Name = "${var.project_name}-db-subnet-group"
+  }
+}
+
 # RDS PostgreSQL Database - This is where our app data will be stored
 # Think of it like a cloud database server
 
@@ -219,6 +229,7 @@ resource "aws_db_instance" "beer_database" {
   # Security
   skip_final_snapshot    = true                       # For demo purposes
   vpc_security_group_ids = [aws_security_group.db.id] # defines firewall rules for AWS RDS
+  db_subnet_group_name   = aws_db_subnet_group.main.name # specifies which VPC/subnets to use
 
   # Tags
   tags = {
