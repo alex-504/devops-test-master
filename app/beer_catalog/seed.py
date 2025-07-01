@@ -1,6 +1,7 @@
 from beer_catalog.db import session_local
 from beer_catalog.beer import Beer
 
+
 def seed_database():
     session = session_local()
     beers = [
@@ -12,6 +13,7 @@ def seed_database():
     session.commit()
     session.close()
 
+
 if __name__ == "__main__":
     seed_database()
-    print("Database seeded with test beers.") 
+    print("Database seeded with test beers.")
