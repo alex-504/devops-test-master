@@ -6,8 +6,9 @@ from sqlalchemy import text
 from flask import Flask, jsonify, request
 from beer_catalog.db import engine, session_local
 from beer_catalog.beer import Base, Beer
+from seed import seed_database
 
-# Load environment variables (12-factor app principle #3)
+# Load environment variables
 load_dotenv()
 
 # Configure logging
@@ -97,6 +98,15 @@ def create_beer():
     except Exception as e:
         logger.error(f"Error creating beer: {e}")
         return jsonify({"error": "Failed to create beer"}), 500
+
+
+@app.route("/seed", methods=["POST"])
+def seed():
+    try:
+        seed_database()
+        return jsonify({"message": "Database seeded with test beers"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.errorhandler(404)

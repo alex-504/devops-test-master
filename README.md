@@ -1,306 +1,257 @@
-## DevOps exercise
+# Beer Catalog DevOps Assignment
 
-## Exercise
-There is an app written in Python and a Terraform folder.
-
-The `docker` folder contains a simple Dockerfile.
-
-### Create the following resource:
-In terraform:
-- ECR resources (if you choose ECR, github registry is also fine)
-- ECS Cluster
-- ECS Service
-- RDS Instance (postgres based)
-
-### For the app:
-You need a local setup for the project, i.e. some readme entry showing how to run the app on your machine
-
-- We need to automate the build process
-- Locally the app runs in a virtenv, but on prod it will run the Dockerfile
-
-### CD/CI
-- GitHub Actions Workflows
-    - Pull Request Checks
-    - Build image
-    - Push image to ECR (or github registries)
-    - Deployment of the app into non-prod envs (or prod like envs, if you have the time)
-
-### Extras
-- Postgres user and permission configuration in terraform
-- There are intentional mistakes all over the place. Kudos if you find and solve them.
-
-## App 
-The small app in python has only two endpoints
-- Get all beers
-- Insert one beer
-- Seed beers (for testing)
-
-## Considerations
-- More than the TF code to be running we will check the plan it generates. 
-- Doesn't need to be perfect
-- Avoid using open source modules for setting networking / ecs. We want to see your capabilities at writing the resources
-
-## What will be evaluated
-- Terraform best practices
-- Structure of the terraform code
-- Naming conventions
-- Separation of concerns
-- AWS knowledge
-
-## How to Deploy This Infrastructure to AWS 👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻👈🏻
-
-This project is ready to be deployed to AWS using Terraform. Follow these steps to connect your resources to your AWS account and provide all required variables.
+##  Project Overview
+This project demonstrates a complete DevOps workflow for a Python web application, containerized with Docker, deployed on AWS using Terraform, and automated with GitHub Actions. The solution follows 12-factor app and SOLID principles, with a focus on security, automation, and documentation.
 
 ---
 
-### 1. **Set Up AWS Credentials**
+## Architecture
+- **Flask App** (Dockerized, venv for local dev)
+- **PostgreSQL** (AWS RDS)
+- **ECS Fargate** (App hosting)
+- **ECR** (Docker image registry)
+- **VPC, Subnets, Security Groups** (Terraform-managed)
+- **CloudWatch** (Logging & Alarms)
+- **GitHub Actions** (CI/CD)
 
-Terraform needs AWS credentials to create resources in your account.  
-You can provide credentials in several ways, but the most common is using the AWS CLI:
+![Architecture Diagram](imgs/infra.png)
 
+---
+
+## Local Development
+
+### 1. Clone the repository
 ```sh
-aws configure
+git clone git@github.com:alex-504/devops-test-master.git
+cd devops-test-master/app/beer_catalog
 ```
-- Enter your AWS Access Key ID
-- Enter your AWS Secret Access Key
-- Enter your default region (e.g., us-east-1)
-- Enter your default output format (json is fine)
 
-Alternatively, you can set these as environment variables:
+### 2. Set up virtual environment (venv)
 ```sh
-export AWS_ACCESS_KEY_ID=your-access-key
-export AWS_SECRET_ACCESS_KEY=your-secret-key
-export AWS_DEFAULT_REGION=us-east-1
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ---
 
-### 2. **Set Required Terraform Variables**
+### 3. Running with PostgreSQL
 
-Some resources require variables that must be provided at runtime, such as your database password and the Docker image for your app.
-
-You can provide these variables in several ways:
-
-**A. As environment variables:**
-```sh
-export TF_VAR_db_password="yourStrongPassword"
-export TF_VAR_app_image="123456789012.dkr.ecr.us-east-1.amazonaws.com/beer-catalog-app:latest"
-```
-
-**B. As command-line arguments:**
-```sh
-terraform apply -var="db_password=yourStrongPassword" -var="app_image=123456789012.dkr.ecr.us-east-1.amazonaws.com/beer-catalog-app:latest"
-```
-
-**C. In a `terraform.tfvars` file:**
-```hcl
-db_password = "yourStrongPassword"
-app_image   = "123456789012.dkr.ecr.us-east-1.amazonaws.com/beer-catalog-app:latest"
-```
-
----
-
-### 3. **Initialize and Validate Terraform**
-
-```sh
-terraform init
-terraform validate
-```
-
----
-
-### 4. **Plan and Apply**
-
-**Preview the changes:**
-```sh
-terraform plan
-```
-
-**Apply the changes (provision resources):**
-```sh
-terraform apply
-```
-
----
-
-### 5. **Notes**
-
-- You must have sufficient AWS permissions to create VPCs, subnets, ECS, RDS, ECR, and IAM roles.
-- The `app_image` variable should point to a Docker image you have pushed to your ECR repository.
-- The `db_password` should be a strong password for your PostgreSQL database.
-- No AWS resources will be created until you run `terraform apply`.
-- You can destroy all resources with:
+**Prerequisites:**
+- PostgreSQL installed (e.g., `brew install postgresql@14` on macOS)
+- Database created:
   ```sh
-  terraform destroy
+  createdb beer_catalog
+  ```
+
+**Set the environment variable and run:**
+```sh
+export DATABASE_URL="postgresql://localhost/beer_catalog"
+python app.py
+```
+
+---
+
+### 4. Running with SQLite
+
+**No prerequisites needed.**
+
+**Set the environment variable and run:**
+```sh
+export DATABASE_URL="sqlite:///beers.db"
+python app.py
+```
+
+---
+
+### 5. Testing Endpoints
+
+- **Health check:**  
+  ```sh
+  curl http://127.0.0.1:5000/health
+  ```
+- **Get all beers:**  
+  ```sh
+  curl http://127.0.0.1:5000/beers
+  ```
+- **Add a beer:**  
+  ```sh
+  curl -X POST http://127.0.0.1:5000/beers \
+    -H "Content-Type: application/json" \
+    -d '{"name": "Heineken", "style": "Lager", "abv": 5.0}'
+  ```
+  You can add as many as you prefer. Just don't drink them all! 🍻
+- **Seed the database:**  
+  ```sh
+  python seed.py
   ```
 
 ---
 
-**If you do not have an AWS account, you can still review and validate the code with `terraform validate`.**
+## Running the App with Docker
 
-## How to test the app
+You can run the app locally using Docker, just like in production (ECS). This ensures consistency and lets you test the container before deploying.
 
-Pre-requisites:
-- PostgreSQL installed (brew install postgresql@14 on macOS)
-- Python 3.11+ installed
-- Poetry installed (pip install poetry)
-
-Step 1: Cteate a PostgreSql database
-```bash
-brew install postgresql@14
+### 1. Build the Docker image
+```sh
+docker build -t beer-catalog-app .
 ```
 
-Step 2: Create a virtual environment
-```bash
-cd app # if not in app already
-python3 -m venv venv
+### 2. Run the app with SQLite (no extra setup needed)
+```sh
+docker run -p 5000:5000 beer-catalog-app
+```
+- The app will be available at [http://localhost:5000](http://localhost:5000).
 
-# Activate virtual environment
-source venv/bin/activate
-
-# Install Poetry (if not already installed)
-pip install poetry
-
-# Update Poetry lock file (after dependency changes)
-poetry lock
-
-# Install project dependencies
-poetry install
+### 3. Run the app with PostgreSQL
+- Make sure you have a PostgreSQL instance running and accessible.
+- Set the `DATABASE_URL` environment variable:
+```sh
+docker run -p 5000:5000 -e DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/beer_catalog" beer-catalog-app
 ```
 
-**Step 3: Test with PostGres**
-```bash
-export DATABASE_URL="postgresql://localhost/beer_catalog"
+> **Note:** This is the same Docker image that is pushed to ECR and used by ECS in production, ensuring consistency between local and cloud environments.
 
-# Create the database
-createdb beer_catalog
+---
 
-# Run the Flask application
-python -m flask --app beer_catalog/app run --debug
+##  Deploying to AWS (using Dockerfile)
+
+### 1. Build & Push Docker Image
+- Automated via GitHub Actions on push to `main`, `master`, `feature/*` branches. For production, we can use the `main` branch. (next updates would be added)
+
+### 2. Provision Infrastructure
+```sh
+cd terraform
+terraform init
+terraform plan
+terraform apply
 ```
+- All AWS resources (ECR, ECS, RDS, VPC, etc.) are created from scratch (no prebuilt modules).
 
-Step 4: Test endpoints
-```bash
-# Health check
-curl http://127.0.0.1:5000/health
-# Expected: {"status": "healthy", "database": "connected"}
+### 3. App Access (using ECS Public IP)
+- App will be available at the `ECS public IP` (see ECS task details in AWS Console).
+For example, if the ECS public IP is `123.456.789.012`, the app will be available at `http://123.456.789.012:5000`.
 
-# Get beers (initially empty)
-curl http://127.0.0.1:5000/beers
-# Expected: []
+---
 
-# Seed the database
-python seed.py
-# Expected: JSON output with seeding status
+## CI/CD Pipeline (workflows/docker-ecr.yml)
+- **Pull Request Checks:** Linting and (optional) tests on every PR.
+- **Docker Build & Push:** On merge to `main`, `master`, `feature/*` branches, image is built and pushed to ECR.
+- **ECS Deployment:** ECS service is updated with the new image.
+- **Push image to ECR:** On push, the new image is built and pushed to ECR.
+- **Deploy app to ECS:** ECS service is updated with the new image.
 
-# Get beers (now populated)
-curl http://127.0.0.1:5000/beers
-# Expected: Array of beer objects
-```
+The workflows are define on `.github/workflows/` folder.
 
-** Running the app with Sqlite**
+---
 
-**Step 1: Setup Python environment**
-```bash
-cd app
-python3 -m venv venv
-source venv/bin/activate
-pip install poetry
-poetry lock
-poetry install
-```
+## Terraform Infrastructure
+- **ECR repository** for Docker images
+- **ECS cluster & service** for app hosting
+- **RDS PostgreSQL instance**
+- **VPC, subnets, security groups** (built from scratch)
+- **CloudWatch log group & alarms**
+- **No prebuilt modules used for ECS or networking**
 
-**Step 2: Run the app with Sqlite**
-```bash
-export DATABASE_URL="sqlite:///beers.db"
-python -m flask --app beer_catalog/app run --debug
-```
+---
 
-**Step 3: Test endpoints**
-```bash
-# Health check
-curl http://127.0.0.1:5000/health
-# Expected: {"status": "healthy", "database": "connected"}
+## API Endpoints
+| Method | Endpoint         | Description         |
+|--------|------------------|--------------------|
+| GET    | /health          | Health check       |
+| GET    | /beers           | List all beers     |
+| POST   | /beers           | Add a new beer     |
+| POST   | /seed            | Seed database      |
 
-# Get beers (initially empty)
-curl http://127.0.0.1:5000/beers
-# Expected: [] becase it is not seeded yet 
+> **Note:** No `/beers/<id>` endpoint as per the original app.
 
-# Seed the database
-python seed.py
-# Expected: JSON output with seeding status
+---
 
-# Get beers (now populated)
-curl http://127.0.0.1:5000/beers
-# Expected: Array of beer objects
+## Best Practices & Gotchas
+- **Intentional Issues:** Documented and fixed in `ISSUES_FOUND.md`.
+- **12-factor & SOLID:** Environment variables, logging, error handling, and code structure.
+- **Security:** IAM roles, least privilege, no hardcoded secrets.
+- **Naming & Structure:** Consistent resource names, clear separation of concerns.
 
-```
+---
 
-** Summary of DB tests:
-| Step                | SQLite Command/Setting                        | PostgreSQL Command/Setting                        |
-|---------------------|-----------------------------------------------|---------------------------------------------------|
-| **Set DB URL**      | `export DATABASE_URL="sqlite:///beers.db"`    | `export DATABASE_URL="postgresql://localhost/beer_catalog"` |
-| **Start Flask**     | `python -m flask --app beer_catalog/app run --debug` | `python -m flask --app beer_catalog/app run --debug` |
-| **Seed Data**       | `python seed.py`                              | `python seed.py`                                  |
-| **Test Endpoints**  | Same for both                                 | Same for both                                     |
+## Monitoring & Logging
+- **CloudWatch Logs:** ECS task logs
+- **CloudWatch Alarms:** RDS high CPU, ECS task failures
 
-## Useful commands
+---
 
-**Adding new beers**
-```bash
-url -X POST http://127.0.0.1:5000/beers \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Heineken", "style": "Lager", "abv": 5.0}'
-```
+## Screenshots of AWS Console
+(All rerouces were created from scratch and provisioned using Terraform)
+### AWS Console: 
+* [ECS cluster](https://loom.com/i/6ef15cfc31134456a40189fdb4cdd986), 
+* [ECS Logs](https://loom.com/i/dbc136a6fc3c4658936bb742ad26fa3f), 
+* [RDS PostgreSQL DB](https://loom.com/i/02449ce6b4c049f2b55c28304dae4a30),
+* [RDS Monitoring](https://loom.com/i/4140cdba78774d3c8a2e7efa9ea67176), 
+* [RDS User Permission Setup](https://loom.com/i/03da3cd136f541999745a76d89171b06), 
+* [VPC](https://loom.com/i/a03bed3225d74aebb01bbaa0044307b3), 
+* [CloudWatch log events](https://loom.com/i/a77189d4c7fb4de6b398535894c5cee6), 
+* [CloudWatch Alarms](https://loom.com/i/047193a0a7e84e81b2dd2b0b98997666)
+### App endpoints tested via 'curl'
+- health Check:  `curl http://3.27.247.99:5000/health` -> [screenshot](https://www.loom.com/i/488f3093723d48c1945b88fae43526ae)
+- get all beers: curl `http://3.27.247.99:5000/beers` -> [screenshot](https://loom.com/i/1a78218075ae481782c82a44a2862176)
+- add a beer: `curl -X POST http://3.27.247.99:5000/beers -H "Content-Type: application/json" -d '{"name": "Heineken", "style": "Lager", "abv": 5.0}'` -> [screenshot](https://loom.com/i/2f445224a9ea41a79ebdce70c24ac064)
+- ❌ seed the database: `curl -X POST http://3.27.247.99:5000/seed` -> [screenshot](https://loom.com/i/79f75d35e15345d381e3f7e318017c9f)
 
-**Get all beers**
-```bash
-curl http://127.0.0.1:5000/beers
-```
+### CI/CD pipeline runs
+- [PR Checks](https://loom.com/i/6f4d55c60d0747959f1fe52062a4dbca)
+- [Build and Push Docker Image to ECR](https://loom.com/i/243f707b845c4e91bed08453d95296dd)
+- [ECR Repository](https://loom.com/i/56434a184635491994c211caa5c81627)
+- [ECS Service](https://loom.com/i/3e1cdec272854f52b8aeff94fa1fea3e)
+- [ECR Tasks Overview](https://loom.com/i/c068637d241b44b8af4b4936094e3bb7)
 
-**Health check**
-```bash
-curl http://127.0.0.1:5000/health
-```
 
-**Seed the database**
-- To reseed, first we need to clear the database
-```bash
-dropdb beer_catalog
-createdb beer_catalog
-python seed.py
-```
+---
 
-## 🐳 ECS (Elastic Container Service) Setup
+## Troubleshooting & Common Issues
+- **Region Mismatch:** Ensure AWS CLI and Console are set to `ap-southeast-2`.
+- **Resource Already Exists:** Delete or import orphaned resources.
+- **App Not Responding:** Check ECS task status, security groups, and logs.
+- **Terraform State Issues:** Use `terraform import` or clean up resources as needed.
 
-This project uses AWS ECS Fargate to run the Beer Catalog app in a scalable, managed container environment.
+---
 
-### What's Set Up
-- **ECS Cluster**: The environment where your containers run
-- **Task Definition**: The "recipe" for your app container (image, ports, env vars)
-- **Task Execution Role**: Lets ECS pull images from ECR and write logs
-- **ECS Service**: Keeps your app running and accessible in the public subnet
+## Evaluation Points
+- **Infrastructure design:** Built for scalability and team collaboration.
+- **Naming & documentation:** Clear, standardized, and recruiter-friendly.
+- **CI/CD pipeline:** Automated, reliable, and secure.
+- **Resilience & security:** Follows AWS and DevOps best practices.
+- **Troubleshooting:** All intentional issues found and documented.
 
-### How to Configure the App Image
-- Set the `app_image` variable to the full ECR image URL you want to deploy (e.g., `123456789012.dkr.ecr.us-east-1.amazonaws.com/beer-catalog-app:latest`).
-- You can do this via environment variable, command-line flag, or `terraform.tfvars` (see AWS deployment instructions above).
+---
 
-### How to Access the App
-- After deployment, the app will be running in the public subnet on port 5000.
-- You can find the public IP by checking the ECS task in the AWS console (or by adding a Terraform output for the task ENI/public IP).
-- If you add a load balancer, update this section to explain how to access the app via the load balancer DNS name.
+## Bonus Features (status)
+- [✓] RDS user/permission automation. Refer to `aws_db_instance`, `aws_db_user`, `aws_db_parameter_group`, or `aws_db_role`
+- [✓] Secret management. Refer to `terraform.tfvars`
+- [X] ECS Service Auto Scaling. I did not have time to implement this since it required very specific configuration on AWS and loadbalancer.
 
-### Notes
-- The ECS service is set to run 1 copy of your app by default. You can scale this by changing the `desired_count` in the Terraform code.
-- For production, consider adding a load balancer and auto-scaling.
+---
 
-## Monitoring & Alerts
+## Next Steps / Improvements
+- Add `/beers/<id>` endpoint
+- Add authentication/authorization
+- Use Terraform modules for larger projects
+- Add automated integration tests
+- ECS Service Auto Scaling
+- Add ECR Lifecycle policy: to restrict the number of images in the repository. It would limit the growth of images in the repository.
 
-- **CloudWatch Alarms:**
-  - `ECS-Task-Failures`: Triggers if any ECS task fails in the `beer-catalog-service`.
-  - `RDS-High-CPU`: Triggers if RDS CPU utilization exceeds 80%.
-- Both alarms are provisioned via Terraform and can be viewed in the AWS CloudWatch console.
-- See `cloudwatch_alarms.png` for a screenshot of the alarms in the AWS Console.
+---
+
+
+## Minor Personal Notes
+- Time Investment notes: ~2h to complete the full AWS Deployment.
+- I would like to have tested more the CI/CD pipeline.
+- Cost optimization: I created a [budget Status](https://loom.com/i/e293bf96e91d4b7799a8987bb9943d7f) on AWS Console, to avoid unexpected costs.
+- I would like to have added a deletion protection on RDS instance (`deletion_protection = var.environment == "prod" ? true : false`), maybe next time.
+
+## Contact
+Alexandre Vieira  
+[https://www.linkedin.com/in/alexandre-dev/]
 
 
 
