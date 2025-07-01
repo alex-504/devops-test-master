@@ -294,6 +294,14 @@ This project uses AWS ECS Fargate to run the Beer Catalog app in a scalable, man
 - The ECS service is set to run 1 copy of your app by default. You can scale this by changing the `desired_count` in the Terraform code.
 - For production, consider adding a load balancer and auto-scaling.
 
+## Monitoring & Alerts
+
+- **CloudWatch Alarms:**
+  - `ECS-Task-Failures`: Triggers if any ECS task fails in the `beer-catalog-service`.
+  - `RDS-High-CPU`: Triggers if RDS CPU utilization exceeds 80%.
+- Both alarms are provisioned via Terraform and can be viewed in the AWS CloudWatch console.
+- See `cloudwatch_alarms.png` for a screenshot of the alarms in the AWS Console.
+
 
 
 

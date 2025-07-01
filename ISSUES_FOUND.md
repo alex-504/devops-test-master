@@ -151,4 +151,50 @@ These "gotchas" are actually excellent learning opportunities:
 - **Environment Configuration**: Understand 12-factor app principles
 - **Error Handling**: Learn proper error handling patterns
 - **Security**: Understand container and application security
-- **Infrastructure as Code**: Start from scratch with proper structure 
+- **Infrastructure as Code**: Start from scratch with proper structure
+
+## Issue: ECS App Could Not Connect to RDS (Database Connection Refused)
+
+### **Symptoms:**
+- ECS tasks were repeatedly stopping with exit code 1.
+- CloudWatch logs showed:
+  - `sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused`
+- Health check endpoint was not responding; app was not running.
+
+### **Root Cause:**
+- The application was trying to connect to a PostgreSQL database at `localhost` inside the container, but the actual database was running on AWS RDS in a private subnet.
+- The ECS task definition was only passing `DB_HOST` or missing the correct `DATABASE_URL` environment variable, so the app defaulted to `localhost`.
+
+### **Troubleshooting Steps:**
+1. **Checked ECS task status:**
+   - Noticed tasks were stopping quickly after launch.
+2. **Enabled CloudWatch logging:**
+   - Updated ECS task definition to send logs to CloudWatch for easier debugging.
+3. **Reviewed CloudWatch logs:**
+   - Found clear Python stack trace showing connection attempts to `localhost`.
+4. **Reviewed environment variables:**
+   - Realized the app expected a `DATABASE_URL` env var, not just `DB_HOST`.
+5. **Checked RDS endpoint and credentials:**
+   - Confirmed the correct RDS endpoint, username, and password.
+
+### **Solution:**
+- Updated the ECS task definition in Terraform to set the `DATABASE_URL` environment variable:
+  ```hcl
+  environment = [
+    {
+      name  = "DATABASE_URL"
+      value = "postgresql://beer_admin:${var.db_password}@${var.db_host}:5432/beer_catalog"
+    }
+  ]
+  ```
+- Added `db_host` as a Terraform variable and set it to the RDS endpoint.
+- Re-applied Terraform to update the ECS service and task definition.
+- Verified the app was running and healthy by hitting the `/health` endpoint.
+
+### **Key Learnings:**
+- Always check CloudWatch logs for ECS task failures—they provide detailed error messages.
+- Ensure your app's environment variables match what the code expects (e.g., `DATABASE_URL`).
+- Use Terraform variables to avoid hardcoding sensitive or environment-specific values.
+- ECS task definition changes require a new revision and service update.
+
+--- 
