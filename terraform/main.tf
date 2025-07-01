@@ -270,3 +270,34 @@ resource "aws_cloudwatch_log_group" "ecs_app" {
   name              = "/ecs/beer-catalog-app"
   retention_in_days = 7
 }
+
+resource "aws_cloudwatch_metric_alarm" "ecs_task_failures" {
+  alarm_name          = "ECS-Task-Failures"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "ServiceTaskFailures"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Sum"
+  threshold           = 0
+  alarm_description   = "Alarm if any ECS task fails in the beer-catalog-service"
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.app.name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "rds_high_cpu" {
+  alarm_name          = "RDS-High-CPU"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/RDS"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 80
+  alarm_description   = "Alarm if RDS CPU utilization exceeds 80%"
+  dimensions = {
+    DBInstanceIdentifier = aws_db_instance.beer_database.id
+  }
+}
