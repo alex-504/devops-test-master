@@ -26,64 +26,79 @@ git clone git@github.com:alex-504/devops-test-master.git
 cd devops-test-master/app/beer_catalog
 ```
 
-### 2. Set up virtual environment (venv)
+### 2. Set up a virtual environment and install Poetry
 ```sh
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install poetry
+```
+
+### 3. Install dependencies with Poetry
+```sh
+poetry install
 ```
 
 ---
 
-### 3. Running with PostgreSQL
+### 4. Run the app with SQLite (quick start, no setup needed)
+```sh
+export DATABASE_URL="sqlite:///beers.db"
+poetry run python -m flask --app beer_catalog/app run --debug
+```
+- The app will be available at [http://127.0.0.1:5000](http://127.0.0.1:5000).
+
+---
+
+### 5. Run the app with PostgreSQL
 
 **Prerequisites:**
 - PostgreSQL installed (e.g., `brew install postgresql@14` on macOS)
-- Database created:
+- Start PostgreSQL (macOS/Homebrew):
+  ```sh
+  brew services start postgresql@14
+  # or for other versions:
+  # brew services start postgresql
+  ```
+- Check status:
+  ```sh
+  brew services list
+  ```
+- Create the database (if not already created):
   ```sh
   createdb beer_catalog
   ```
+  - If you see an error like `database "beer_catalog" already exists`, you can skip this step.
 
-**Set the environment variable and run:**
+**Set the DATABASE_URL environment variable:**
+- The default user is usually your macOS username (e.g., `alexandrevieira`).
+- If you use a password, add it after the username: `postgresql://<user>:<password>@localhost:5432/beer_catalog`
+
 ```sh
-export DATABASE_URL="postgresql://localhost/beer_catalog"
-python app.py
+export DATABASE_URL="postgresql://<user>@localhost:5432/beer_catalog"
 ```
+
+**Run the app:**
+```sh
+poetry run python -m flask --app beer_catalog/app run --debug
+```
+- The app will be available at [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
 ---
 
-### 4. Running with SQLite
-
-**No prerequisites needed.**
-
-**Set the environment variable and run:**
-```sh
-export DATABASE_URL="sqlite:///beers.db"
-python app.py
-```
-
----
-
-### 5. Testing Endpoints
-
-- **Health check:**  
+### Testing Endpoints
+- Health check:  
   ```sh
   curl http://127.0.0.1:5000/health
   ```
-- **Get all beers:**  
+- Get all beers:  
   ```sh
   curl http://127.0.0.1:5000/beers
   ```
-- **Add a beer:**  
+- Add a beer:  
   ```sh
   curl -X POST http://127.0.0.1:5000/beers \
     -H "Content-Type: application/json" \
     -d '{"name": "Heineken", "style": "Lager", "abv": 5.0}'
-  ```
-  You can add as many as you prefer. Just don't drink them all! 🍻
-- **Seed the database:**  
-  ```sh
-  python seed.py
   ```
 
 ---
@@ -103,12 +118,14 @@ docker run -p 5000:5000 beer-catalog-app
 ```
 - The app will be available at [http://localhost:5000](http://localhost:5000).
 
-### 3. Run the app with PostgreSQL
-- Make sure you have a PostgreSQL instance running and accessible.
-- Set the `DATABASE_URL` environment variable:
+### 3. Run the app with PostgreSQL (macOS/Windows)
+If you want to use your local PostgreSQL database with Docker:
 ```sh
-docker run -p 5000:5000 -e DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/beer_catalog" beer-catalog-app
+docker run -p 5000:5000 -e DATABASE_URL="postgresql://<user>@host.docker.internal:5432/beer_catalog" beer-catalog-app
 ```
+- Replace `<user>` with your Postgres username.
+- If you use a password, add it after the username.
+- The app will be available at [http://localhost:5000](http://localhost:5000).
 
 > **Note:** This is the same Docker image that is pushed to ECR and used by ECS in production, ensuring consistency between local and cloud environments.
 
