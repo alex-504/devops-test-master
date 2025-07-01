@@ -25,4 +25,9 @@ variable "db_password" {
 variable "app_image" {
   description = "Docker image to use for the app (ECR URL)"
   type        = string
+}
+
+variable "db_host" {
+  description = "RDS endpoint for the app"
+  type        = string
 } 

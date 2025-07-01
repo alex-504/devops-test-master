@@ -71,10 +71,18 @@ resource "aws_ecs_task_definition" "app" {
       ]
       environment = [
         {
-          name  = "DB_HOST"
-          value = "beer-catalog-db" # Replace with your RDS endpoint or use a variable
+          name  = "DATABASE_URL"
+          value = "postgresql://beer_admin:${var.db_password}@${var.db_host}:5432/beer_catalog"
         }
       ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.ecs_app.name
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "ecs"
+        }
+      }
       essential = true
     }
   ])
@@ -256,4 +264,9 @@ resource "aws_ecs_service" "app" {
   tags = {
     Name = "${var.project_name}-service"
   }
+}
+
+resource "aws_cloudwatch_log_group" "ecs_app" {
+  name              = "/ecs/beer-catalog-app"
+  retention_in_days = 7
 }
