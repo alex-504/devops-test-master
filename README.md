@@ -131,10 +131,14 @@ docker run -p 5000:5000 -e DATABASE_URL="postgresql://<user>@host.docker.interna
 
 ---
 
-##  Deploying to AWS (using Dockerfile)
+## ☁️ Deploying to AWS
+
+> **Note:**
+> An example `terraform.tfvars.example` file is provided in the `terraform/` directory.  
+> **Copy it to a new file called `terraform.tfvars` and update the values with your own secrets and settings before running `terraform apply`.**
 
 ### 1. Build & Push Docker Image
-- Automated via GitHub Actions on push to `main`, `master`, `feature/*` branches. For production, we can use the `main` branch. (next updates would be added)
+- Automated via GitHub Actions on push to `main`, `master`, `feature/*` branches.
 
 ### 2. Provision Infrastructure
 ```sh
@@ -145,9 +149,8 @@ terraform apply
 ```
 - All AWS resources (ECR, ECS, RDS, VPC, etc.) are created from scratch (no prebuilt modules).
 
-### 3. App Access (using ECS Public IP)
-- App will be available at the `ECS public IP` (see ECS task details in AWS Console).
-For example, if the ECS public IP is `123.456.789.012`, the app will be available at `http://123.456.789.012:5000`.
+### 3. App Access
+- App will be available at the ECS public IP (see ECS task details in AWS Console).
 
 ---
 

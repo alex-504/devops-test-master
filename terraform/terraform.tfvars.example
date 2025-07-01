@@ -1,0 +1,7 @@
+# Example terraform.tfvars file for testing/demo purposes only.
+# Replace these values with your own secrets for real deployments.
+
+db_password = "examplepassword"
+app_image   = "123456789012.dkr.ecr.us-east-1.amazonaws.com/beer-catalog-app:latest"
+# Add other variables as needed, e.g.:
+# aws_region = "us-east-1" 
