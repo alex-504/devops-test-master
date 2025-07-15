@@ -1,5 +1,5 @@
 # ECR Repository - This is where we store our Docker images
-# Think of it like a private Docker Hub for AWS
+# It is like a private Docker Hub for AWS
 
 resource "aws_ecr_repository" "beer_app" {
   name = "${var.project_name}-app"
@@ -83,7 +83,7 @@ resource "aws_ecs_task_definition" "app" {
           awslogs-stream-prefix = "ecs"
         }
       }
-      essential = true
+      essential = true # This makes sure the container is running
     }
   ])
 }
