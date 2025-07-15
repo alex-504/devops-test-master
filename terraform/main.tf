@@ -9,11 +9,16 @@ resource "aws_ecr_repository" "beer_app" {
     encryption_type = "AES256"
   }
 
+  # Force delete even if repository contains images
+  force_delete = true
+
   # This adds a tag to help us identify it
   tags = {
     Name = "Beer Catalog App Repository"
   }
 }
+
+
 # ECS Task Execution Role - Allows ECS tasks to pull images from ECR and write logs
 resource "aws_iam_role" "ecs_task_execution" {
   name = "${var.project_name}-ecs-task-execution-role"
