@@ -1,5 +1,5 @@
 # ECR Repository - This is where we store our Docker images
-# Think of it like a private Docker Hub for AWS
+# It is like a private Docker Hub for AWS
 
 resource "aws_ecr_repository" "beer_app" {
   name = "${var.project_name}-app"
@@ -9,11 +9,16 @@ resource "aws_ecr_repository" "beer_app" {
     encryption_type = "AES256"
   }
 
+  # Force delete even if repository contains images
+  force_delete = true
+
   # This adds a tag to help us identify it
   tags = {
     Name = "Beer Catalog App Repository"
   }
 }
+
+
 # ECS Task Execution Role - Allows ECS tasks to pull images from ECR and write logs
 resource "aws_iam_role" "ecs_task_execution" {
   name = "${var.project_name}-ecs-task-execution-role"
@@ -83,7 +88,7 @@ resource "aws_ecs_task_definition" "app" {
           awslogs-stream-prefix = "ecs"
         }
       }
-      essential = true
+      essential = true # This makes sure the container is running
     }
   ])
 }
