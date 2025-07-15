@@ -97,9 +97,9 @@ poetry run python -m flask --app beer_catalog/app run --debug
 - Add a beer:  
   ```sh
   curl -X POST http://127.0.0.1:5000/beers \
-    -H "Content-Type: application/json" \
-    -d '{"name": "Heineken", "style": "Lager", "abv": 5.0}'
-  ```
+  -H "Content-Type: application/json" \
+  -d '{"name": "Heineken", "style": "Lager", "abv": 5.0}'
+```
 
 ---
 
